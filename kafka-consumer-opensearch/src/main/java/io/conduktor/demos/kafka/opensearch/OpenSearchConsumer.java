@@ -79,8 +79,8 @@ public class OpenSearchConsumer {
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"); //ปกติจะ commit เองทุกๆเวลาใน configแต่เราอยากให้ commit หลัง process ก็เลยตั้งเป็น false แล้วไป commit เอง ซึ่งได้ 2 แบบคือ at most once ก็คือจะ commit เลยทั้ง batch ก่อน process กับอีกแบบ at least once เราก็ commit หลัง process ทั้ง batch
-
+        properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        
         // create consumer
         return new KafkaConsumer<>(properties);
 
