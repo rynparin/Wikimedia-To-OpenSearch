@@ -36,7 +36,7 @@ public class OpenSearchConsumer {
 
     public static RestHighLevelClient createOpenSearchClient() {
         String connString = "http://localhost:9200";
-//        String connString = "https://c9p5mwld41:45zeygn9hy@kafka-course-2322630105.eu-west-1.bonsaisearch.net:443";
+
 
         // we build a URI from the connection string
         RestHighLevelClient restHighLevelClient;
@@ -107,7 +107,6 @@ public class OpenSearchConsumer {
         KafkaConsumer<String, String> consumer = createKafkaConsumer();
 
         // we need to create the index on OpenSearch if it doesn't exist already
-        // ใช้ try จะ close ให้เอง
         try (openSearchClient; consumer){
 
             boolean indexExists = openSearchClient.indices().exists(new GetIndexRequest("wikimedia"), RequestOptions.DEFAULT);
@@ -135,16 +134,12 @@ public class OpenSearchConsumer {
                     // send the record into OpenSearch
 
                     try {
-                        // เราจะใช้ consumer delivery semantics แบบ at least once: offsets are committed after the message is processed. If the processing goes wrong, the message will be read again. This can result in duplicate processing of messages.
-                        // เพื่อให้ข้อมูลไม่หายไม่งั้นมันจะ commit offset ทั้ง batch แต่ยังไม่ได้ process พอ consumer crash เราจะเสีย message เพราะมันอ่านไปแล้วแต่วิธีนี้คือจะ commit หลังจาก process หมดแล้วถ้า comsumer crash จะไม่มีปห message หายแต่จะมีการ process ซ้ำเลยต้องทำให้การ process เราเป็น idempotent
-                        // make process idempotent (processing again the message won't impact your system)
-                        // ตอนแรกถ้าส่งแล้วมีปหพอส่งใหม่มันจะเป็น duplicate แต่มันจะgen id ใหม่ซึ่งทำให้เหมือนคนละค่าเราเลยเอา id จากค่ามาใช้เป็น id แทนถ้าเป็นอันเดิมจะได้ไม่มีปัญหา
+
                         String id = extractId(record.value());
 
                         IndexRequest indexRequest = new IndexRequest("wikimedia")
                                 .source(record.value(), XContentType.JSON).id(id);
 
-//                        IndexResponse response = openSearchClient.index(indexRequest, RequestOptions.DEFAULT);
                         bulkRequest.add(indexRequest);
                     } catch (Exception e){
 
@@ -152,19 +147,19 @@ public class OpenSearchConsumer {
 
                 }
 
-                // ถ้ามีค่อย process
+
                 if (bulkRequest.numberOfActions() > 0){
                     BulkResponse bulkResponse = openSearchClient.bulk(bulkRequest, RequestOptions.DEFAULT);
                     log.info("Inserted " + bulkResponse.getItems().length + " record(s).");
 
                     try {
-                        // add delays เพื่อเพิ่มโอกาสมี bulk action
+
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
 
-                    // commit offsets after the batch is consumed
+
                     consumer.commitSync();
                     log.info("Offsets have been committed!");
                 }
