@@ -46,7 +46,6 @@ public class WikimediaChangesProducer {
         eventSource.start();
 
         // we produce for 10 minutes and block the program until then
-        // ไม่งั้น main thread จบอันอื่นก็จะตัดด้วย
         TimeUnit.MINUTES.sleep(10);
 
     }
